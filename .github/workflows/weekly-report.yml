@@ -1,0 +1,47 @@
+name: 每周成果汇报
+
+# 每周一早上 9:00 (UTC+8) 自动生成上周代码成果汇报
+on:
+  schedule:
+    - cron: "0 1 * * 1"   # UTC 01:00 = 北京时间 09:00
+  workflow_dispatch:
+    inputs:
+      repo:
+        description: "仓库 (owner/repo)，留空则使用仓库 Secrets C2V_REPO"
+        required: false
+        type: string
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 生成周报
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-4o-mini' }}
+          C2V_REPO: ${{ secrets.C2V_REPO }}
+        run: |
+          REPO="${{ github.event.inputs.repo }}"
+          if [ -z "$REPO" ]; then REPO="$C2V_REPO"; fi
+          if [ -z "$REPO" ]; then echo "::error::未指定仓库"; exit 1; fi
+          echo "生成 $REPO 的周报..."
+          curl -sS -X POST "${{ vars.APP_URL || 'http://localhost:4000' }}/api/cron/weekly-report" \
+            -H "Content-Type: application/json" \
+            -d "{\"repo\":\"$REPO\",\"days\":7}" \
+            -o report.json
+          echo "--- 报告 ---"
+          cat report.json
+
+      - name: 提交报告到仓库
+        if: github.ref_name == 'main'
+        run: |
+          TS=$(date +%Y-%m-%d)
+          echo "## 成果汇报 $TS" >> report.md
+          cat report.json >> report.md
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add report.md
+          git commit -m "chore: 自动生成周报 $TS" || echo "无变化"
+          git push || echo "推送失败（可能无写权限）"
