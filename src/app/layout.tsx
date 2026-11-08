@@ -15,7 +15,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Commit2Value | 代码价值翻译器",
   description:
-    "选择 GitHub 提交，一键翻译成客户看得懂的工作成果汇报。选中提交 → 自动翻译 → 一键发送给客户。",
+    "开源工具：把 GitHub / GitLab 提交翻译成客户看得懂的工作成果汇报，附带工时估算、报价与提交活跃度。",
+  openGraph: {
+    title: "Commit2Value | 代码价值翻译器",
+    description: "把 Git 提交变成客户看得懂的成果汇报。开源、可自托管。",
+    type: "website",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

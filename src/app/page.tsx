@@ -42,6 +42,10 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SettingsDialog } from "@/components/settings-dialog";
+import { SiteHero } from "@/components/site-hero";
+import { SiteFooter } from "@/components/site-footer";
+import { GithubMark } from "@/components/github-mark";
+import { REPO_URL } from "@/lib/site";
 import { ContributorNetwork } from "@/components/contributor-network";
 import { BranchMultiSelect } from "@/components/branch-multi-select";
 import { EstimatePanel } from "@/components/estimate-panel";
@@ -728,32 +732,33 @@ export default function Home() {
               </p>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="设置"
-            onClick={() => setSettingsOpen(true)}
-          >
-            <Settings className="size-5" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button variant="outline" size="sm" asChild>
+              <a href={REPO_URL} target="_blank" rel="noreferrer" title="在 GitHub 上查看源码">
+                <GithubMark />
+                <span className="hidden sm:inline">GitHub 开源</span>
+              </a>
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="设置"
+              onClick={() => setSettingsOpen(true)}
+            >
+              <Settings className="size-5" />
+            </Button>
+          </div>
         </header>
 
-        {/* 三步流程提示 */}
-        <div className="mb-8 flex flex-wrap items-center justify-center gap-2 text-sm text-muted-foreground">
-          {[
-            { icon: GitFork, label: "选中提交" },
-            { icon: Sparkles, label: "自动翻译" },
-            { icon: Send, label: "一键发送给客户" },
-          ].map((s, i) => (
-            <span key={s.label} className="flex items-center gap-2">
-              {i > 0 && <ArrowRight className="size-4 text-primary/60" />}
-              <span className="flex items-center gap-1.5 rounded-full border bg-card px-3 py-1.5 shadow-xs">
-                <s.icon className="size-4 text-primary" />
-                {s.label}
-              </span>
-            </span>
-          ))}
-        </div>
+        {/* 主题、主要功能与开源地址；加载仓库后只保留流程条 */}
+        <SiteHero
+          showFeatures={!repo}
+          onStart={() => {
+            const el = document.getElementById("repo-input");
+            el?.scrollIntoView({ behavior: "smooth", block: "center" });
+            el?.focus({ preventScroll: true });
+          }}
+        />
 
         <div className="grid items-start gap-6 lg:grid-cols-2">
           {/* ============ 左栏 ============ */}
@@ -774,6 +779,7 @@ export default function Home() {
                   }}
                 >
                   <Input
+                    id="repo-input"
                     placeholder={
                       repoProvider === "gitlab"
                         ? "例如：gitlab-org/my-project（支持嵌套子组）"
@@ -781,7 +787,7 @@ export default function Home() {
                     }
                     value={repoInput}
                     onChange={(e) => setRepoInput(e.target.value)}
-                    aria-label="GitHub 仓库地址"
+                    aria-label={repoProvider === "gitlab" ? "GitLab 项目地址" : "GitHub 仓库地址"}
                   />
                   <Button type="submit" disabled={repoLoading || !repoInput.trim()}>
                     {repoLoading ? (
@@ -1808,6 +1814,8 @@ export default function Home() {
           </Card>
           </div>
         </div>
+
+        <SiteFooter />
       </div>
 
       <SettingsDialog
